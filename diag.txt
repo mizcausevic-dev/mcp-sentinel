@@ -1,0 +1,261 @@
+﻿
+========== src\schemas\validation-schemas.ts ==========
+import { z } from 'zod';
+
+export const ServerRegistrationSchema = z.object({
+  name: z.string().min(2).max(64),
+  endpoint: z.string().url(),
+  transport: z.enum(['stdio', 'sse', 'http', 'streamable-http']),
+  authMethod: z.enum(['none', 'bearer', 'oauth2', 'mtls', 'api-key']),
+  oauthScopes: z.array(z.string()).optional().default([]),
+  declaredTools: z.array(z.string()).min(0),
+  owner: z.string().min(1),
+  environment: z.enum(['production', 'staging', 'development']),
+});
+
+export const ToolSchemaSchema = z.object({
+  serverId: z.string().min(1),
+  toolName: z.string().min(1),
+  description: z.string().optional().default(''),
+  inputSchema: z.record(z.any()),
+  destructive: z.boolean().optional().default(false),
+  requiresApproval: z.boolean().optional().default(false),
+});
+
+export const InvocationSchema = z.object({
+  serverId: z.string().min(1),
+  toolName: z.string().min(1),
+  caller: z.string().min(1),
+  arguments: z.record(z.any()),
+  resultPreview: z.string().max(8000).optional().default(''),
+  latencyMs: z.number().min(0),
+  status: z.enum(['ok', 'error', 'timeout', 'denied']),
+  promptContext: z.string().max(8000).optional().default(''),
+});
+
+export const SecurityScanSchema = z.object({
+  serverId: z.string().min(1),
+  includeNetwork: z.boolean().optional().default(true),
+  includeAuth: z.boolean().optional().default(true),
+  includeToolSurface: z.boolean().optional().default(true),
+});
+
+export type ServerRegistration = z.infer<typeof ServerRegistrationSchema>;
+export type ToolSchemaPayload = z.infer<typeof ToolSchemaSchema>;
+export type InvocationPayload = z.infer<typeof InvocationSchema>;
+export type SecurityScanPayload = z.infer<typeof SecurityScanSchema>;
+
+
+========== src\governance\security-scan.ts ==========
+import { findServer } from '../data/servers';
+import { policies } from '../data/audits';
+import { validateServerRegistration } from './server-validator';
+import type { SecurityScanPayload } from '../schemas/validation-schemas';
+
+export interface SecurityScanResult {
+  serverId: string;
+  status: 'pass' | 'review' | 'fail';
+  postureScore: number;
+  failedPolicies: string[];
+  passedPolicies: string[];
+  issues: string[];
+  recommendedNextAction: string;
+}
+
+export function runSecurityScan(payload: SecurityScanPayload): SecurityScanResult {
+  const server = findServer(payload.serverId);
+
+  if (!server) {
+    return {
+      serverId: payload.serverId,
+      status: 'fail',
+      postureScore: 0,
+      failedPolicies: ['server-not-registered'],
+      passedPolicies: [],
+      issues: [`Server ${payload.serverId} is not registered.`],
+      recommendedNextAction: 'Register server through POST /api/validate/server before scanning.',
+    };
+  }
+
+  const validation = validateServerRegistration({
+    name: server.name,
+    endpoint: server.endpoint,
+    transport: server.transport,
+    authMethod: server.authMethod,
+    oauthScopes: server.oauthScopes,
+    declaredTools: server.declaredTools,
+    owner: server.owner,
+    environment: server.environment,
+  });
+
+  const failedPolicies: string[] = [];
+  const passedPolicies: string[] = [];
+  const issues: string[] = [...validation.issues];
+
+  for (const policy of policies) {
+    let failed = false;
+
+    if (policy.id === 'pol_least_privilege_oauth') {
+      const writeOrAdmin = server.oauthScopes.some((s) => /(write|admin)/i.test(s));
+      failed = writeOrAdmin;
+    }
+    if (policy.id === 'pol_no_auth_destructive') {
+      const destructive = server.declaredTools.some((t) =>
+        /(delete|drop|remove|truncate|wipe|exec)/i.test(t)
+      );
+      failed = server.authMethod === 'none' && destructive;
+    }
+    if (policy.id === 'pol_tls_minimum') {
+      failed =
+        (server.transport === 'http' || server.transport === 'sse' || server.transport === 'streamable-http') &&
+        !server.endpoint.startsWith('https://') &&
+        server.transport !== 'stdio';
+    }
+
+    if (failed) {
+      failedPolicies.push(policy.id);
+      issues.push(`Policy violation: ${policy.name}.`);
+    } else {
+      passedPolicies.push(policy.id);
+    }
+  }
+
+  let status: 'pass' | 'review' | 'fail';
+  if (validation.postureScore >= 80 && failedPolicies.length === 0) {
+    status = 'pass';
+  } else if (validation.postureScore >= 55 && failedPolicies.length <= 1) {
+    status = 'review';
+  } else {
+    status = 'fail';
+  }
+
+  let recommendedNextAction: string;
+  if (status === 'pass') {
+    recommendedNextAction = 'Continue scheduled posture scans on default cadence.';
+  } else if (status === 'review') {
+    recommendedNextAction = 'Schedule platform security review within 7 days.';
+  } else {
+    recommendedNextAction = 'Quarantine server, suspend agent traffic, escalate to SecOps.';
+  }
+
+  return {
+    serverId: server.id,
+    status,
+    postureScore: validation.postureScore,
+    failedPolicies,
+    passedPolicies,
+    issues,
+    recommendedNextAction,
+  };
+}
+
+
+========== src\governance\server-validator.ts ==========
+import type { ServerRegistration } from '../schemas/validation-schemas';
+
+export interface ValidationResult {
+  status: 'allowed' | 'flagged' | 'blocked';
+  postureScore: number;
+  issues: string[];
+  passedChecks: string[];
+  recommendedNextAction: string;
+}
+
+const DESTRUCTIVE_TOKENS = ['delete', 'drop', 'remove', 'truncate', 'wipe', 'force', 'exec'];
+const WRITE_TOKENS = ['write', 'create', 'update', 'merge', 'send', 'post', 'patch'];
+
+export function validateServerRegistration(payload: ServerRegistration): ValidationResult {
+  const issues: string[] = [];
+  const passed: string[] = [];
+  let score = 100;
+
+  // Auth posture
+  if (payload.authMethod === 'none' && payload.environment === 'production') {
+    issues.push('Production server registered with authMethod=none.');
+    score -= 35;
+  } else if (payload.authMethod === 'none') {
+    issues.push('Server has no authentication; safe only for isolated sandboxes.');
+    score -= 15;
+  } else {
+    passed.push(`Authentication method ${payload.authMethod} is acceptable for ${payload.environment}.`);
+  }
+
+  // OAuth scope hygiene
+  const writeOrAdminScopes = payload.oauthScopes.filter((s) =>
+    /(^|:)(write|admin)/i.test(s) || /\b(write|admin)/i.test(s)
+  );
+  if (writeOrAdminScopes.length > 0) {
+    issues.push(
+      `OAuth scopes include write/admin grants: ${writeOrAdminScopes.join(', ')}. Verify least-privilege.`
+    );
+    score -= 10;
+  } else if (payload.authMethod === 'oauth2') {
+    passed.push('OAuth scopes appear least-privilege.');
+  }
+
+  // Tool surface vs auth pairing
+  const destructiveTools = payload.declaredTools.filter((t) =>
+    DESTRUCTIVE_TOKENS.some((token) => t.toLowerCase().includes(token))
+  );
+  const writeTools = payload.declaredTools.filter((t) =>
+    WRITE_TOKENS.some((token) => t.toLowerCase().includes(token))
+  );
+
+  if (destructiveTools.length > 0 && payload.authMethod === 'none') {
+    issues.push(
+      `Destructive tools (${destructiveTools.join(', ')}) exposed without authentication.`
+    );
+    score -= 30;
+  } else if (destructiveTools.length > 0) {
+    passed.push(`Destructive tools present (${destructiveTools.join(', ')}) but auth is enforced.`);
+  }
+
+  if (writeTools.length > 0 && payload.authMethod === 'none' && payload.environment === 'production') {
+    issues.push('Write-capable tools exposed in production without authentication.');
+    score -= 20;
+  }
+
+  // Transport posture
+  if (payload.transport === 'stdio' && payload.environment === 'production') {
+    issues.push('stdio transport in production; remote-attach risk if container is compromised.');
+    score -= 10;
+  } else if (payload.transport === 'http' && !payload.endpoint.startsWith('https://')) {
+    issues.push('HTTP transport without TLS in endpoint URL.');
+    score -= 25;
+  } else if (
+    payload.transport === 'streamable-http' ||
+    payload.transport === 'sse' ||
+    payload.transport === 'http'
+  ) {
+    if (payload.endpoint.startsWith('https://')) {
+      passed.push('Endpoint enforces HTTPS.');
+    }
+  }
+
+  // Owner/governance
+  if (!payload.owner || payload.owner.length < 2) {
+    issues.push('No accountable owner declared; governance accountability gap.');
+    score -= 5;
+  } else {
+    passed.push(`Accountable owner declared: ${payload.owner}.`);
+  }
+
+  score = Math.max(0, Math.min(100, score));
+
+  let status: 'allowed' | 'flagged' | 'blocked';
+  let recommendedNextAction: string;
+
+  if (score >= 80) {
+    status = 'allowed';
+    recommendedNextAction = 'Approve registration and enable continuous polling.';
+  } else if (score >= 55) {
+    status = 'flagged';
+    recommendedNextAction = 'Route to platform security review before granting production traffic.';
+  } else {
+    status = 'blocked';
+    recommendedNextAction = 'Block registration until destructive surface or auth posture is remediated.';
+  }
+
+  return { status, postureScore: score, issues, passedChecks: passed, recommendedNextAction };
+}
+

@@ -59,8 +59,7 @@ export function runSecurityScan(payload: SecurityScanPayload): SecurityScanResul
     if (policy.id === 'pol_tls_minimum') {
       failed =
         (server.transport === 'http' || server.transport === 'sse' || server.transport === 'streamable-http') &&
-        !server.endpoint.startsWith('https://') &&
-        server.transport !== 'stdio';
+        !server.endpoint.startsWith('https://');
     }
 
     if (failed) {

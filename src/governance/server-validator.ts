@@ -11,6 +11,10 @@ export interface ValidationResult {
 const DESTRUCTIVE_TOKENS = ['delete', 'drop', 'remove', 'truncate', 'wipe', 'force', 'exec'];
 const WRITE_TOKENS = ['write', 'create', 'update', 'merge', 'send', 'post', 'patch'];
 
+// Known scope names that grant write/admin capability without containing those literal words.
+// Covers GitHub (repo, workflow, gist), generic admin/manage/delete patterns.
+const KNOWN_WRITE_SCOPES = ['repo', 'workflow', 'gist', 'user', 'admin', 'manage', 'delete'];
+
 export function validateServerRegistration(payload: ServerRegistration): ValidationResult {
   const issues: string[] = [];
   const passed: string[] = [];
@@ -27,10 +31,12 @@ export function validateServerRegistration(payload: ServerRegistration): Validat
     passed.push(`Authentication method ${payload.authMethod} is acceptable for ${payload.environment}.`);
   }
 
-  // OAuth scope hygiene
-  const writeOrAdminScopes = payload.oauthScopes.filter((s) =>
-    /(^|:)(write|admin)/i.test(s) || /\b(write|admin)/i.test(s)
-  );
+  // OAuth scope hygiene - flag explicit write/admin patterns AND known write-granting scope names
+  const writeOrAdminScopes = payload.oauthScopes.filter((s) => {
+    const lower = s.toLowerCase();
+    if (/(^|:)(write|admin)/i.test(s) || /\b(write|admin)/i.test(s)) return true;
+    return KNOWN_WRITE_SCOPES.some((k) => lower === k || lower.startsWith(k + ':'));
+  });
   if (writeOrAdminScopes.length > 0) {
     issues.push(
       `OAuth scopes include write/admin grants: ${writeOrAdminScopes.join(', ')}. Verify least-privilege.`
