@@ -2,9 +2,8 @@
 
 TypeScript observability, security audit, and governance portfolio project demonstrating MCP server registration validation, schema-drift detection, prompt-injection scanning, PII guardrails, and posture scoring for enterprise AI platforms running Model Context Protocol servers.
 
-> Recruiter takeaway:
 >
-> *"This person treats the Model Context Protocol surface as a platform-governance problem — auth posture, tool-surface risk, schema drift, and prompt-injection defense all rolled into a single operations layer."*
+> *"I treat the Model Context Protocol surface as a platform-governance problem — auth posture, tool-surface risk, schema drift, and prompt-injection defense all rolled into a single operations layer."*
 
 ## Project Overview
 
