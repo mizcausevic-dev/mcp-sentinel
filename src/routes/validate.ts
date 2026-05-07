@@ -4,11 +4,11 @@ import {
   ToolSchemaSchema,
   InvocationSchema,
   SecurityScanSchema,
-} from '../schemas/validation-schemas.js';
-import { validateServerRegistration } from '../governance/server-validator.js';
-import { evaluateToolSchema } from '../governance/schema-drift.js';
-import { evaluateInvocation } from '../governance/injection-detector.js';
-import { runSecurityScan } from '../governance/security-scan.js';
+} from '../schemas/validation-schemas';
+import { validateServerRegistration } from '../governance/server-validator';
+import { evaluateToolSchema } from '../governance/schema-drift';
+import { evaluateInvocation } from '../governance/injection-detector';
+import { runSecurityScan } from '../governance/security-scan';
 
 export const validateRouter = Router();
 

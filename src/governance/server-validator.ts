@@ -1,4 +1,4 @@
-import type { ServerRegistration } from '../schemas/validation-schemas.js';
+import type { ServerRegistration } from '../schemas/validation-schemas';
 
 export interface ValidationResult {
   status: 'allowed' | 'flagged' | 'blocked';

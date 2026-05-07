@@ -1,5 +1,5 @@
-import { env } from '../config/env.js';
-import type { InvocationPayload } from '../schemas/validation-schemas.js';
+import { env } from '../config/env';
+import type { InvocationPayload } from '../schemas/validation-schemas';
 
 const INJECTION_SIGNATURES: { pattern: RegExp; weight: number; label: string }[] = [
   { pattern: /ignore (all )?(previous|prior) instructions/i, weight: 0.55, label: 'instruction-override' },

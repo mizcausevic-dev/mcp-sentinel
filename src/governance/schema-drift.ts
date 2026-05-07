@@ -1,4 +1,4 @@
-import type { ToolSchemaPayload } from '../schemas/validation-schemas.js';
+import type { ToolSchemaPayload } from '../schemas/validation-schemas';
 
 interface ToolSnapshot {
   serverId: string;

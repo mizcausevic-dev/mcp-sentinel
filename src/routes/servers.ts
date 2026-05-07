@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { servers, findServer } from '../data/servers.js';
+import { servers, findServer } from '../data/servers';
 
 export const serversRouter = Router();
 

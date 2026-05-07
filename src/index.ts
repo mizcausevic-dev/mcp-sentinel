@@ -3,16 +3,16 @@ import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
 import swaggerUi from 'swagger-ui-express';
-import { env } from './config/env.js';
-import { serversRouter } from './routes/servers.js';
+import { env } from './config/env';
+import { serversRouter } from './routes/servers';
 import {
   auditsRouter,
   incidentsRouter,
   policiesRouter,
   dashboardRouter,
-} from './routes/audits.js';
-import { validateRouter, securityScanRouter, postureCheckRouter } from './routes/validate.js';
-import { openApiSpec } from './docs/swagger.js';
+} from './routes/audits';
+import { validateRouter, securityScanRouter, postureCheckRouter } from './routes/validate';
+import { openApiSpec } from './docs/swagger';
 
 export const app = express();
 const startedAt = Date.now();

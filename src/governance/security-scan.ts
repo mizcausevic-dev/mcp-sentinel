@@ -1,7 +1,7 @@
-import { findServer } from '../data/servers.js';
-import { policies } from '../data/audits.js';
-import { validateServerRegistration } from './server-validator.js';
-import type { SecurityScanPayload } from '../schemas/validation-schemas.js';
+import { findServer } from '../data/servers';
+import { policies } from '../data/audits';
+import { validateServerRegistration } from './server-validator';
+import type { SecurityScanPayload } from '../schemas/validation-schemas';
 
 export interface SecurityScanResult {
   serverId: string;

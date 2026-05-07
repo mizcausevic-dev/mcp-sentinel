@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { audits, incidents, policies } from '../data/audits.js';
-import { servers } from '../data/servers.js';
+import { audits, incidents, policies } from '../data/audits';
+import { servers } from '../data/servers';
 
 export const auditsRouter = Router();
 auditsRouter.get('/', (_req, res) => {

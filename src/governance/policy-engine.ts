@@ -1,4 +1,4 @@
-import { policies } from '../data/audits.js';
+import { policies } from '../data/audits';
 
 export function listPolicies() {
   return policies;
