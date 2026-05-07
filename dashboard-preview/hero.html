@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>MCP Sentinel — Fleet Overview</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0B0C10;
+  --panel: #1F2833;
+  --panel-2: #161B22;
+  --text: #C5C6C7;
+  --text-dim: #8b8d8f;
+  --accent: #66FCF1;
+  --accent-dark: #45A29E;
+  --danger: #ff5c7a;
+  --warn: #ffb347;
+  --ok: #4ade80;
+  --border: #2a3441;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Space Grotesk', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  padding: 28px 36px;
+  min-height: 100vh;
+  font-size: 14px;
+}
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.logo {
+  width: 38px;
+  height: 38px;
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 18px;
+}
+.brand h1 {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.brand .tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(74, 222, 128, 0.1);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+  color: var(--ok);
+  border-radius: 999px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.status-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.kpi {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+}
+.kpi::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 4px; height: 100%;
+  background: var(--accent);
+}
+.kpi.danger::before { background: var(--danger); }
+.kpi.warn::before { background: var(--warn); }
+.kpi.ok::before { background: var(--ok); }
+.kpi .label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.kpi .value {
+  font-family: var(--mono);
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+.kpi.danger .value { color: var(--danger); }
+.kpi.warn .value { color: var(--warn); }
+.kpi.ok .value { color: var(--ok); }
+.kpi.accent .value { color: var(--accent); }
+.kpi .delta {
+  font-family: var(--mono);
+  font-size: 11px;
+  margin-top: 8px;
+  color: var(--text-dim);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 18px;
+}
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px;
+}
+.panel h2 {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-family: var(--mono);
+  font-weight: 500;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.panel h2 .count {
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 500;
+}
+td {
+  padding: 10px;
+  border-bottom: 1px solid rgba(42, 52, 65, 0.5);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(102, 252, 241, 0.03); }
+
+.server-name {
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--text);
+}
+.server-id {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.badge.healthy { background: rgba(74, 222, 128, 0.12); color: var(--ok); }
+.badge.degraded { background: rgba(255, 179, 71, 0.12); color: var(--warn); }
+.badge.quarantined { background: rgba(255, 92, 122, 0.12); color: var(--danger); }
+.badge.down { background: rgba(255, 92, 122, 0.18); color: var(--danger); }
+.badge .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+.posture-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.posture-bar .track {
+  width: 70px; height: 5px;
+  background: rgba(197, 198, 199, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.posture-bar .fill {
+  height: 100%;
+  border-radius: 3px;
+}
+.posture-bar .num {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.incident-row {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(42, 52, 65, 0.5);
+}
+.incident-row:last-child { border-bottom: none; }
+.incident-row .sev {
+  width: 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.incident-row.critical .sev { background: var(--danger); }
+.incident-row.high .sev { background: #ff8c5e; }
+.incident-row.medium .sev { background: var(--warn); }
+.incident-row.low .sev { background: var(--ok); }
+
+.incident-body { flex: 1; min-width: 0; }
+.incident-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.incident-meta {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+}
+.incident-meta .pipe { color: var(--border); margin: 0 6px; }
+
+.spark {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 22px;
+  margin-top: 12px;
+}
+.spark .bar {
+  flex: 1;
+  background: var(--accent-dark);
+  border-radius: 1px;
+  min-height: 2px;
+  opacity: 0.7;
+}
+.spark .bar.peak { background: var(--accent); opacity: 1; }
+.spark .bar.alert { background: var(--danger); opacity: 1; }
+
+.footer-row {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">
+    <div class="logo">M</div>
+    <div>
+      <h1>MCP Sentinel</h1>
+      <div class="tag">FLEET OVERVIEW · OPS CONSOLE</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span class="status-pill"><span class="dot"></span>SENTINEL ONLINE</span>
+    <span style="color: var(--text-dim);">env: production</span>
+    <span style="color: var(--text-dim);">poll: 30s</span>
+    <span style="color: var(--accent);">v0.1.0</span>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi accent">
+    <div class="label">Servers Registered</div>
+    <div class="value">6</div>
+    <div class="delta">+2 in last 7d</div>
+  </div>
+  <div class="kpi ok">
+    <div class="label">Avg Posture</div>
+    <div class="value">71</div>
+    <div class="delta">↓ 4 pts wk-over-wk</div>
+  </div>
+  <div class="kpi danger">
+    <div class="label">Open Incidents</div>
+    <div class="value">3</div>
+    <div class="delta">1 critical · 1 high</div>
+  </div>
+  <div class="kpi warn">
+    <div class="label">Flagged Invocations 24h</div>
+    <div class="value">12</div>
+    <div class="delta">3 blocked outright</div>
+  </div>
+  <div class="kpi">
+    <div class="label">Active Policies</div>
+    <div class="value">6</div>
+    <div class="delta">2 enforce · 4 flag</div>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="panel">
+    <h2>MCP Fleet <span class="count">6 servers</span></h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Server</th>
+          <th>Env</th>
+          <th>Transport</th>
+          <th>Auth</th>
+          <th>Status</th>
+          <th>Posture</th>
+          <th>Last Seen</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="server-name">Slack Enterprise MCP</div>
+            <div class="server-id">srv_slack_prod · collab-platform</div>
+          </td>
+          <td>prod</td>
+          <td>streamable-http</td>
+          <td>oauth2</td>
+          <td><span class="badge healthy"><span class="dot"></span>healthy</span></td>
+          <td><div class="posture-bar"><div class="track"><div class="fill" style="width:91%; background: var(--ok);"></div></div><span class="num">91</span></div></td>
+          <td>20s ago</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="server-name">Jira Cloud MCP</div>
+            <div class="server-id">srv_jira_prod · platform-eng</div>
+          </td>
+          <td>prod</td>
+          <td>streamable-http</td>
+          <td>oauth2</td>
+          <td><span class="badge healthy"><span class="dot"></span>healthy</span></td>
+          <td><div class="posture-bar"><div class="track"><div class="fill" style="width:88%; background: var(--ok);"></div></div><span class="num">88</span></div></td>
+          <td>30s ago</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="server-name">Postgres Read MCP</div>
+            <div class="server-id">srv_postgres_stg · data-platform</div>
+          </td>
+          <td>staging</td>
+          <td>http</td>
+          <td>mtls</td>
+          <td><span class="badge healthy"><span class="dot"></span>healthy</span></td>
+          <td><div class="posture-bar"><div class="track"><div class="fill" style="width:82%; background: var(--ok);"></div></div><span class="num">82</span></div></td>
+          <td>45s ago</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="server-name">GitHub Org MCP</div>
+            <div class="server-id">srv_github_prod · devx</div>
+          </td>
+          <td>prod</td>
+          <td>streamable-http</td>
+          <td>oauth2</td>
+          <td><span class="badge degraded"><span class="dot"></span>degraded</span></td>
+          <td><div class="posture-bar"><div class="track"><div class="fill" style="width:74%; background: var(--warn);"></div></div><span class="num">74</span></div></td>
+          <td>4m ago</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="server-name">Internal CRM Bridge</div>
+            <div class="server-id">srv_internal_crm · revops</div>
+          </td>
+          <td>prod</td>
+          <td>sse</td>
+          <td>bearer</td>
+          <td><span class="badge quarantined"><span class="dot"></span>quarantined</span></td>
+          <td><div class="posture-bar"><div class="track"><div class="fill" style="width:51%; background: var(--danger);"></div></div><span class="num">51</span></div></td>
+          <td>12m ago</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="server-name">Filesystem Dev Sandbox</div>
+            <div class="server-id">srv_filesystem_dev · devx</div>
+          </td>
+          <td>dev</td>
+          <td>stdio</td>
+          <td>none</td>
+          <td><span class="badge degraded"><span class="dot"></span>degraded</span></td>
+          <td><div class="posture-bar"><div class="track"><div class="fill" style="width:42%; background: var(--danger);"></div></div><span class="num">42</span></div></td>
+          <td>1m ago</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="spark">
+      <div class="bar" style="height: 30%"></div>
+      <div class="bar" style="height: 45%"></div>
+      <div class="bar" style="height: 38%"></div>
+      <div class="bar" style="height: 50%"></div>
+      <div class="bar" style="height: 60%"></div>
+      <div class="bar peak" style="height: 80%"></div>
+      <div class="bar" style="height: 55%"></div>
+      <div class="bar" style="height: 48%"></div>
+      <div class="bar alert" style="height: 95%"></div>
+      <div class="bar" style="height: 62%"></div>
+      <div class="bar" style="height: 58%"></div>
+      <div class="bar" style="height: 72%"></div>
+      <div class="bar peak" style="height: 88%"></div>
+      <div class="bar" style="height: 65%"></div>
+      <div class="bar" style="height: 70%"></div>
+      <div class="bar" style="height: 50%"></div>
+      <div class="bar" style="height: 45%"></div>
+      <div class="bar" style="height: 60%"></div>
+      <div class="bar alert" style="height: 92%"></div>
+      <div class="bar" style="height: 68%"></div>
+      <div class="bar" style="height: 75%"></div>
+      <div class="bar peak" style="height: 84%"></div>
+      <div class="bar" style="height: 70%"></div>
+      <div class="bar" style="height: 62%"></div>
+    </div>
+    <div style="font-family: var(--mono); font-size: 10px; color: var(--text-dim); margin-top: 4px; display: flex; justify-content: space-between;">
+      <span>tool invocations · last 24h</span>
+      <span>peak 12,408 calls/hr</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Active Incidents <span class="count">3 open</span></h2>
+    <div class="incident-row critical">
+      <div class="sev"></div>
+      <div class="incident-body">
+        <div class="incident-title">Bulk-delete heuristic on delete_contact</div>
+        <div class="incident-meta">
+          <span style="color: var(--danger); font-weight: 500;">CRITICAL</span>
+          <span class="pipe">|</span>
+          srv_internal_crm
+          <span class="pipe">|</span>
+          investigating
+          <span class="pipe">|</span>
+          9m ago
+        </div>
+      </div>
+    </div>
+    <div class="incident-row high">
+      <div class="sev"></div>
+      <div class="incident-body">
+        <div class="incident-title">Prompt-injection signature in agent context</div>
+        <div class="incident-meta">
+          <span style="color: #ff8c5e; font-weight: 500;">HIGH</span>
+          <span class="pipe">|</span>
+          srv_github_prod
+          <span class="pipe">|</span>
+          open
+          <span class="pipe">|</span>
+          1h 28m ago
+        </div>
+      </div>
+    </div>
+    <div class="incident-row medium">
+      <div class="sev"></div>
+      <div class="incident-body">
+        <div class="incident-title">Auth-less stdio transport, write tools exposed</div>
+        <div class="incident-meta">
+          <span style="color: var(--warn); font-weight: 500;">MEDIUM</span>
+          <span class="pipe">|</span>
+          srv_filesystem_dev
+          <span class="pipe">|</span>
+          open
+          <span class="pipe">|</span>
+          35m ago
+        </div>
+      </div>
+    </div>
+    <div class="incident-row medium" style="opacity: 0.6;">
+      <div class="sev"></div>
+      <div class="incident-body">
+        <div class="incident-title">PII leak suspected in query result preview</div>
+        <div class="incident-meta">
+          <span style="color: var(--text-dim); font-weight: 500;">MITIGATED</span>
+          <span class="pipe">|</span>
+          srv_postgres_stg
+          <span class="pipe">|</span>
+          1h 12m ago
+        </div>
+      </div>
+    </div>
+
+    <h2 style="margin-top: 26px;">Top Detectors <span class="count">last 24h</span></h2>
+    <div style="display: grid; gap: 10px; font-family: var(--mono); font-size: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span>injection-detector</span>
+        <span><span style="color: var(--danger);">●●●●●</span><span style="color: var(--border);">●●</span> <span style="color: var(--text-dim);">5</span></span>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span>invocation-policy</span>
+        <span><span style="color: var(--warn);">●●●●</span><span style="color: var(--border);">●●●</span> <span style="color: var(--text-dim);">4</span></span>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span>schema-drift</span>
+        <span><span style="color: var(--accent);">●●●</span><span style="color: var(--border);">●●●●</span> <span style="color: var(--text-dim);">3</span></span>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span>pii-scanner</span>
+        <span><span style="color: var(--accent);">●●</span><span style="color: var(--border);">●●●●●</span> <span style="color: var(--text-dim);">2</span></span>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span>security-scan</span>
+        <span><span style="color: var(--accent-dark);">●</span><span style="color: var(--border);">●●●●●●</span> <span style="color: var(--text-dim);">1</span></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer-row">
+  <span>mcp-sentinel · GET /api/dashboard/summary</span>
+  <span>generated 2026-05-07T04:21:33Z · next refresh 30s</span>
+</div>
+
+</body>
+</html>

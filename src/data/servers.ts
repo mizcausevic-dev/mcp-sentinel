@@ -1,0 +1,112 @@
+export interface McpServer {
+  id: string;
+  name: string;
+  endpoint: string;
+  transport: 'stdio' | 'sse' | 'http' | 'streamable-http';
+  authMethod: 'none' | 'bearer' | 'oauth2' | 'mtls' | 'api-key';
+  oauthScopes: string[];
+  declaredTools: string[];
+  owner: string;
+  environment: 'production' | 'staging' | 'development';
+  postureScore: number;
+  status: 'healthy' | 'degraded' | 'down' | 'quarantined';
+  lastSeenAt: string;
+  registeredAt: string;
+}
+
+export const servers: McpServer[] = [
+  {
+    id: 'srv_jira_prod',
+    name: 'Jira Cloud MCP',
+    endpoint: 'https://mcp.atlassian.com/jira/v1',
+    transport: 'streamable-http',
+    authMethod: 'oauth2',
+    oauthScopes: ['read:jira-work', 'write:jira-work'],
+    declaredTools: ['search_issues', 'create_issue', 'update_issue', 'add_comment'],
+    owner: 'platform-eng',
+    environment: 'production',
+    postureScore: 88,
+    status: 'healthy',
+    lastSeenAt: new Date(Date.now() - 1000 * 30).toISOString(),
+    registeredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 31).toISOString(),
+  },
+  {
+    id: 'srv_github_prod',
+    name: 'GitHub Org MCP',
+    endpoint: 'https://api.githubcopilot.com/mcp/',
+    transport: 'streamable-http',
+    authMethod: 'oauth2',
+    oauthScopes: ['repo', 'read:org', 'workflow'],
+    declaredTools: ['list_repos', 'create_pr', 'merge_pr', 'list_issues', 'create_issue'],
+    owner: 'devx',
+    environment: 'production',
+    postureScore: 74,
+    status: 'degraded',
+    lastSeenAt: new Date(Date.now() - 1000 * 60 * 4).toISOString(),
+    registeredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 90).toISOString(),
+  },
+  {
+    id: 'srv_internal_crm',
+    name: 'Internal CRM Bridge',
+    endpoint: 'https://crm-mcp.internal.kineticgain.dev/mcp',
+    transport: 'sse',
+    authMethod: 'bearer',
+    oauthScopes: [],
+    declaredTools: ['lookup_account', 'list_opportunities', 'export_contacts', 'delete_contact'],
+    owner: 'revops',
+    environment: 'production',
+    postureScore: 51,
+    status: 'quarantined',
+    lastSeenAt: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
+    registeredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
+  },
+  {
+    id: 'srv_filesystem_dev',
+    name: 'Filesystem Dev Sandbox',
+    endpoint: 'stdio:///opt/mcp/filesystem',
+    transport: 'stdio',
+    authMethod: 'none',
+    oauthScopes: [],
+    declaredTools: ['read_file', 'write_file', 'list_directory', 'delete_file'],
+    owner: 'devx',
+    environment: 'development',
+    postureScore: 42,
+    status: 'degraded',
+    lastSeenAt: new Date(Date.now() - 1000 * 60 * 1).toISOString(),
+    registeredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
+  },
+  {
+    id: 'srv_slack_prod',
+    name: 'Slack Enterprise MCP',
+    endpoint: 'https://mcp.slack.com/v1',
+    transport: 'streamable-http',
+    authMethod: 'oauth2',
+    oauthScopes: ['channels:read', 'chat:write', 'users:read'],
+    declaredTools: ['send_message', 'list_channels', 'search_messages'],
+    owner: 'collab-platform',
+    environment: 'production',
+    postureScore: 91,
+    status: 'healthy',
+    lastSeenAt: new Date(Date.now() - 1000 * 20).toISOString(),
+    registeredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 60).toISOString(),
+  },
+  {
+    id: 'srv_postgres_stg',
+    name: 'Postgres Read MCP',
+    endpoint: 'https://mcp-pg.staging.kineticgain.dev/mcp',
+    transport: 'http',
+    authMethod: 'mtls',
+    oauthScopes: [],
+    declaredTools: ['query', 'describe_schema', 'list_tables'],
+    owner: 'data-platform',
+    environment: 'staging',
+    postureScore: 82,
+    status: 'healthy',
+    lastSeenAt: new Date(Date.now() - 1000 * 45).toISOString(),
+    registeredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 21).toISOString(),
+  },
+];
+
+export function findServer(id: string): McpServer | undefined {
+  return servers.find((s) => s.id === id);
+}
