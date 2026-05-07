@@ -1,5 +1,10 @@
 # MCP Sentinel
 
+[![CI](https://github.com/mizcausevic-dev/mcp-sentinel/actions/workflows/ci.yml/badge.svg)](https://github.com/mizcausevic-dev/mcp-sentinel/actions/workflows/ci.yml)
+[![Node](https://img.shields.io/badge/node-20%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org)
+[![TypeScript](https://img.shields.io/badge/typescript-5.6-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![License: MIT](https://img.shields.io/badge/license-MIT-66FCF1)](LICENSE)
+
 TypeScript observability, security audit, and governance portfolio project demonstrating MCP server registration validation, schema-drift detection, prompt-injection scanning, PII guardrails, and posture scoring for enterprise AI platforms running Model Context Protocol servers.
 
 >
