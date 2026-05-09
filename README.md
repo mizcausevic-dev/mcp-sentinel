@@ -1,3 +1,5 @@
+> 🛡️ **Live preview:** [mcp.kineticgain.com](https://mcp.kineticgain.com) — interactive governance dashboard for this engine. See [mcp-sentinel-dashboard](https://github.com/mizcausevic-dev/mcp-sentinel-dashboard) for the UX repo.
+
 # MCP Sentinel
 
 [![CI](https://github.com/mizcausevic-dev/mcp-sentinel/actions/workflows/ci.yml/badge.svg)](https://github.com/mizcausevic-dev/mcp-sentinel/actions/workflows/ci.yml)
@@ -8,7 +10,7 @@
 TypeScript observability, security audit, and governance portfolio project demonstrating MCP server registration validation, schema-drift detection, prompt-injection scanning, PII guardrails, and posture scoring for enterprise AI platforms running Model Context Protocol servers.
 
 >
-> *"I treat the Model Context Protocol surface as a platform-governance problem — auth posture, tool-surface risk, schema drift, and prompt-injection defense all rolled into a single operations layer."*
+> *"I treat the Model Context Protocol surface as a platform-governance problem â€” auth posture, tool-surface risk, schema drift, and prompt-injection defense all rolled into a single operations layer."*
 
 ## Project Overview
 
@@ -17,8 +19,8 @@ TypeScript observability, security audit, and governance portfolio project demon
 | Runtime | Node.js + TypeScript |
 | Framework | Express 5 |
 | Domain | Enterprise MCP server observability and governance |
-| Validation Areas | Server registration · Auth posture · Tool surface risk · Schema drift · Prompt injection · PII redaction · Policy enforcement |
-| Operational Outputs | Audit records · Incident records · Posture scoring · Policy outcome matrix |
+| Validation Areas | Server registration Â· Auth posture Â· Tool surface risk Â· Schema drift Â· Prompt injection Â· PII redaction Â· Policy enforcement |
+| Operational Outputs | Audit records Â· Incident records Â· Posture scoring Â· Policy outcome matrix |
 | Docs | Swagger UI at `/docs` |
 
 ## Executive Summary
@@ -229,4 +231,4 @@ npm test
 - [Medium](https://medium.com/@mizcausevic)
 - [GitHub](https://github.com/mizcausevic-dev)
 
-Part of [mizcausevic-dev's GitHub portfolio](https://github.com/mizcausevic-dev) — demonstrating enterprise platform observability, AI governance, and web engineering thinking applied to the new Model Context Protocol surface.
+Part of [mizcausevic-dev's GitHub portfolio](https://github.com/mizcausevic-dev) â€” demonstrating enterprise platform observability, AI governance, and web engineering thinking applied to the new Model Context Protocol surface.
